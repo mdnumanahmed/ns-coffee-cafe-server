@@ -28,6 +28,11 @@ async function run() {
 
     const productCollection = client.db("nsCafeDB").collection("products");
 
+    app.get("/products", async (req, res) => {
+      const result = await productCollection.find().toArray();
+      res.send(result);
+    });
+
     app.post("/products", async (req, res) => {
       const product = req.body;
       const result = await productCollection.insertOne(product);
