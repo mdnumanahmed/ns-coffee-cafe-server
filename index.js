@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -33,9 +33,47 @@ async function run() {
       res.send(result);
     });
 
+    // get product by id
+    app.get("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollection.findOne(query);
+      res.send(result);
+    });
+
+    // create product api
     app.post("/products", async (req, res) => {
       const product = req.body;
       const result = await productCollection.insertOne(product);
+      res.send(result);
+    });
+
+    // update product api
+    app.put("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const product = req.body;
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          name: product.name,
+          price: product.price,
+          category: product.category,
+          manufacturer: product.manufacturer,
+          ingredients: product.ingredients,
+          supplier: product.supplier,
+          flavours: product.flavours,
+          rating: product.rating,
+          brand: product.brand,
+          photo: product.photo,
+          details: product.details,
+        },
+      };
+      const result = await productCollection.updateOne(
+        query,
+        updatedDoc,
+        options
+      );
       res.send(result);
     });
 
