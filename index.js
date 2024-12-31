@@ -31,13 +31,11 @@ const client = new MongoClient(uri, {
 
 const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token;
-  console.log(token);
   if (!token) {
     return res.status(401).send({ message: "Not authorized" });
   }
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
-      console.log(err);
       return res.status(401).send({ message: "Unauthorized" });
     }
     req.user = decoded;
@@ -69,6 +67,9 @@ async function run() {
     // products related api
     app.get("/products", verifyToken, async (req, res) => {
       const email = req.query?.email;
+      if (req?.user?.email !== email) {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
       let query = {};
       if (req.query?.email) {
         query = { email };
