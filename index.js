@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -11,8 +12,20 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "https://ns-coffee-cafe.web.app",
+      "https://ns-coffee-cafe.firebaseapp.com",
+    ],
     credentials: true,
+  })
+);
+
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:"],
+    },
   })
 );
 app.use(express.json());
@@ -59,18 +72,29 @@ async function run() {
       res
         .cookie("token", token, {
           httpOnly: true,
-          secure: false,
+          secure: true,
+          sameSite: "none",
         })
         .send({ success: true });
     });
 
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+    });
+
     // products related api
-    app.get("/products", verifyToken, async (req, res) => {
+    app.get("/products", async (req, res) => {
+      const result = await productCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/my-products", verifyToken, async (req, res) => {
       const email = req.query?.email;
+      let query = {};
       if (req?.user?.email !== email) {
         return res.status(403).send({ message: "Forbidden Access" });
       }
-      let query = {};
       if (req.query?.email) {
         query = { email };
       }
@@ -123,7 +147,7 @@ async function run() {
     });
 
     // product delete api
-    app.delete("/products/:id", async (req, res) => {
+    app.delete("/products/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productCollection.deleteOne(query);
