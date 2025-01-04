@@ -11,17 +11,23 @@ const helmet = require('helmet');
 
 const app = express();
 
-app.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      defaultSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:'], // Allow self-hosted and Base64 images
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // Optional: Allow inline styles if required
-      objectSrc: ["'none'"], // Disallow other potentially unsafe sources
-    },
-  })
-);
+// app.use(
+//   helmet.contentSecurityPolicy({
+//     directives: {
+//       defaultSrc: ["'self'"], // Default sources
+//       connectSrc: ["'self'", "https://ns-coffee-cafe-server.vercel.app"], // Allow API calls
+//       imgSrc: ["'self'", "https://i.ibb.co.com", "data:"], // Allow Base64 and self-hosted images
+//       scriptSrc: ["'self'"], // Allow scripts from the same origin
+//       styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles if needed
+//       fontSrc: [
+//         "'self'",
+//         "https://fonts.googleapis.com",
+//         "https://fonts.gstatic.com",
+//       ], // Fonts
+//       objectSrc: ["'none'"], // Disallow object embeds
+//     },
+//   })
+// );
 
 app.get('/', (req, res) => {
   res.send('CSP updated for Base64 images!');
