@@ -35,7 +35,7 @@ const client = new MongoClient(uri, {
 });
 
 const verifyToken = async (req, res, next) => {
-  const token = req.cookies?.token;
+  const token = req?.cookies?.token;
   if (!token) {
     return res.status(401).send({ message: "Not authorized" });
   }
@@ -79,17 +79,29 @@ async function run() {
 
     // products related api
     app.get("/products", async (req, res) => {
-      const result = await productCollection.find().toArray();
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      const result = await productCollection
+        .find()
+        .skip(page * size)
+        .limit(size)
+        .toArray();
       res.send(result);
     });
 
+    // get totalCount of products
+    app.get("/itemsCount", async (req, res) => {
+      const items = await productCollection.estimatedDocumentCount();
+      res.send({ items });
+    });
+
     app.get("/my-products", verifyToken, async (req, res) => {
-      const email = req.query?.email;
+      const email = req?.query?.email;
       let query = {};
       if (req?.user?.email !== email) {
         return res.status(403).send({ message: "Forbidden Access" });
       }
-      if (req.query?.email) {
+      if (req?.query?.email) {
         query = { email };
       }
       const result = await productCollection.find(query).toArray();
@@ -98,7 +110,7 @@ async function run() {
 
     // get product by id
     app.get("/products/:id", async (req, res) => {
-      const id = req.params.id;
+      const id = req?.params?.id;
       const query = { _id: new ObjectId(id) };
       const result = await productCollection.findOne(query);
       res.send(result);
@@ -113,8 +125,8 @@ async function run() {
 
     // update product api
     app.put("/products/:id", async (req, res) => {
-      const id = req.params.id;
-      const product = req.body;
+      const id = req?.params?.id;
+      const product = req?.body;
       const query = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updatedDoc = {
